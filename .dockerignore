@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+.env
+
+# SQLite DB
+*.db
+*.sqlite3
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+
+# Local IDE
+.vscode/
+.idea/
+
+# Docker files
+docker-compose.override.yml
+
+# Node modules (if any)
+node_modules/

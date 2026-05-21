@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infotec | Perfil</title>
+    <meta name="description" content="Página de perfil do usuário Infotec.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="topbar">
+        <p>Frete Grátis para compras acima de R$ 500 | Parcelamento em até 12x sem juros</p>
+    </div>
+
+    <header class="main-header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <span class="logo-box">IT</span>
+                <div class="logo-text">
+                    <h1>Infotec</h1>
+                    <span>Vendas e Soluções</span>
+                </div>
+            </a>
+            <div class="header-actions">
+                <a href="index.html" class="action-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span class="action-text">Voltar</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="profile-page">
+        <section class="profile-section">
+            <div class="section-header">
+                <h2>Meu Perfil</h2>
+                <p>Confira seus dados pessoais e endereço.</p>
+            </div>
+            <div class="profile-card" id="profile-card">
+                <div class="profile-row">
+                    <span class="profile-label">Nome</span>
+                    <span class="profile-value" id="profile-name"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Email</span>
+                    <span class="profile-value" id="profile-email"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Telefone</span>
+                    <span class="profile-value" id="profile-phone"></span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">CPF</span>
+                    <span class="profile-value" id="profile-cpf"></span>
+                </div>
+                <div class="profile-row profile-address">
+                    <span class="profile-label">Endereço</span>
+                    <span class="profile-value" id="profile-address"></span>
+                </div>
+                <div class="profile-actions">
+                    <button type="button" class="btn btn-primary" id="profile-logout">Sair</button>
+                    <a href="index.html" class="btn btn-secondary" id="profile-home">Ir para a loja</a>
+                </div>
+            </div>
+            <div class="profile-empty" id="profile-empty">
+                <p>Nenhum usuário encontrado. Faça cadastro ou login para acessar seu perfil.</p>
+                <div class="profile-actions">
+                    <a href="index.html" class="btn btn-primary">Voltar à loja</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="profile.js"></script>
+</body>
+</html>
