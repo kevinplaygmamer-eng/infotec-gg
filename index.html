@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infotec | Vendas e Soluções</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="topbar">
+        <p>Frete Grátis para compras acima de R$ 500 | Parcelamento em até 12x sem juros</p>
+    </div>
+
+    <header class="main-header">
+        <div class="header-container">
+            <a href="#home" class="logo">
+                <span class="logo-box">IT</span>
+                <div class="logo-text">
+                    <h1>Infotec</h1>
+                    <span>Vendas e Soluções</span>
+                </div>
+            </a>
+
+            <button class="mobile-menu-toggle" aria-label="Abrir Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <nav class="navbar">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#produtos" class="nav-link">Produtos</a>
+                <a href="#assistencia" class="nav-link">Assistência Técnica</a>
+                <a href="#pcs" class="nav-link">PCs Gamer</a>
+                <a href="#contato" class="nav-link">Contato</a>
+            </nav>
+
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Buscar produtos...">
+            </div>
+
+            <div class="header-actions">
+                <button type="button" class="action-btn login-toggle-btn" title="Minha Conta">
+                    <i class="fa-regular fa-user"></i>
+                    <span class="action-text">Entrar</span>
+                </button>
+                <a href="profile.html" class="action-btn profile-link" title="Perfil" style="display:none;">
+                    <i class="fa-solid fa-user"></i>
+                    <span class="action-text">Perfil</span>
+                </a>
+                <button type="button" class="action-btn logout-btn" title="Sair" style="display:none;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="action-text">Sair</span>
+                </button>
+                <button class="action-btn cart-toggle-btn" title="Carrinho">
+                    <div class="cart-icon-wrapper">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span id="cart-count">0</span>
+                    </div>
+                    <span class="action-text">Carrinho</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-sidebar-header">
+            <h3>Carrinho</h3>
+            <button class="close-cart-btn" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cart-items-container" id="cart-items"></div>
+        <div class="cart-sidebar-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-value">R$ 0,00</span>
+            </div>
+            <button class="checkout-btn" id="checkout-btn">Finalizar Compra</button>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cart-overlay"></div>
+
+    <div class="account-modal" id="checkout-modal">
+        <div class="account-modal-content">
+            <button type="button" class="close-account-btn close-checkout-btn" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2>Finalizar Compra</h2>
+            <p id="checkout-total" class="account-help">Total: R$ 0,00</p>
+            <div class="checkout-section">
+                <label><input type="radio" name="payment-method" value="pix" checked> PIX</label>
+                <label><input type="radio" name="payment-method" value="boleto"> Boleto</label>
+                <label><input type="radio" name="payment-method" value="card"> Cartão</label>
+            </div>
+            <div class="account-form">
+                <label for="checkout-address">Endereço para entrega</label>
+                <input type="text" id="checkout-address" placeholder="Rua, número, bairro, cidade" required>
+            </div>
+            <div id="card-info-section" class="account-form" style="display:none; gap:12px;">
+                <label for="card-name">Nome no cartão</label>
+                <input type="text" id="card-name" placeholder="Nome impresso no cartão">
+                <label for="card-number">Número do cartão</label>
+                <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19">
+                <label for="card-exp">Validade</label>
+                <input type="text" id="card-exp" placeholder="MM/AA" maxlength="5">
+                <label for="card-cvv">CVV</label>
+                <input type="text" id="card-cvv" placeholder="000" maxlength="4">
+            </div>
+            <button type="button" class="account-submit-btn" id="confirm-payment-btn">Pagar</button>
+            <p class="account-help">Escolha sua forma de pagamento. Esta é uma simulação de checkout.</p>
+        </div>
+    </div>
+
+    <div class="account-modal" id="account-modal">
+        <div class="account-modal-content">
+            <button type="button" class="close-account-btn" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="account-modal-header">
+                <button type="button" class="account-tab active" data-tab="login">Entrar</button>
+                <button type="button" class="account-tab" data-tab="register">Cadastro</button>
+            </div>
+            <div class="account-tab-content active" id="account-login">
+                <form id="login-form" class="account-form">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" placeholder="Senha" required>
+                    <button type="submit" class="account-submit-btn">Entrar</button>
+                    <p class="account-help">Use seu email e senha para acessar sua conta.</p>
+                </form>
+            </div>
+            <div class="account-tab-content" id="account-register">
+                <form id="register-form" class="account-form">
+                    <label for="register-name">Nome Completo</label>
+                    <input type="text" id="register-name" placeholder="Seu nome" required>
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="seu@email.com" required>
+                    <label for="register-phone">Telefone</label>
+                    <input type="tel" id="register-phone" placeholder="(00) 00000-0000" required>
+                    <label for="register-cpf">CPF</label>
+                    <input type="text" id="register-cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    <label for="register-address">Endereço</label>
+                    <textarea id="register-address" placeholder="Rua, número, bairro, cidade" required></textarea>
+                    <label for="register-password">Senha</label>
+                    <input type="password" id="register-password" placeholder="Senha" required>
+                    <button type="submit" class="account-submit-btn">Criar Conta</button>
+                    <p class="account-help">Seus dados ficam apenas neste navegador para simulação de cadastro.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <section id="home" class="hero-section">
+            <div class="hero-container">
+                <div class="hero-content">
+                    <span class="badge-tech">Tecnologia de Ponta</span>
+                    <h2 class="hero-title">
+                        Tecnologia, desempenho e <span class="text-gradient">soluções completas</span> para seu computador.
+                    </h2>
+                    <p class="hero-subtitle">
+                        Da venda de equipamentos de última geração à assistência técnica especializada, oferecemos tudo que você precisa em um só lugar.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#produtos" class="btn btn-primary">Comprar Agora <i class="fa-solid fa-arrow-right"></i></a>
+                        <a href="#assistencia" class="btn btn-secondary"><i class="fa-solid fa-screwdriver-wrench"></i> Solicitar Assistência</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <h3>5000+</h3>
+                            <p>Clientes Atendidos</p>
+                        </div>
+                        <div class="stat-item">
+                            <h3>98%</h3>
+                            <p>Satisfação</p>
+                        </div>
+                        <div class="stat-item">
+                            <h3>15+</h3>
+                            <p>Anos no Mercado</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image-wrapper">
+                    <div class="glow-bg"></div>
+                    <img src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80" alt="Hardware de Alta Performance" class="hero-img">
+                    <div class="floating-promo-card">
+                        <span class="promo-label">Oferta Especial</span>
+                        <h4 class="promo-discount">Até 40% OFF</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="categories-section">
+            <div class="section-header">
+                <h2>Categorias em Destaque</h2>
+                <p>Explore nossa ampla variedade de produtos e serviços especializados</p>
+            </div>
+            <div class="categories-grid">
+                <div class="category-card" data-category="computadores">
+                    <div class="category-icon"><i class="fa-solid fa-desktop"></i></div>
+                    <span>Computadores</span>
+                </div>
+                <div class="category-card" data-category="notebooks">
+                    <div class="category-icon"><i class="fa-solid fa-laptop"></i></div>
+                    <span>Notebooks</span>
+                </div>
+                <div class="category-card" data-category="processadores">
+                    <div class="category-icon"><i class="fa-solid fa-microchip"></i></div>
+                    <span>Processadores</span>
+                </div>
+                <div class="category-card" data-category="placas-video">
+                    <div class="category-icon"><i class="fa-solid fa-id-card"></i></div>
+                    <span>Placas de Vídeo</span>
+                </div>
+                <div class="category-card" data-category="memorias">
+                    <div class="category-icon"><i class="fa-solid fa-memory"></i></div>
+                    <span>Memórias RAM</span>
+                </div>
+                <div class="category-card" data-category="ssds">
+                    <div class="category-icon"><i class="fa-solid fa-database"></i></div>
+                    <span>SSDs</span>
+                </div>
+                <div class="category-card" data-category="perifericos">
+                    <div class="category-icon"><i class="fa-solid fa-keyboard"></i></div>
+                    <span>Periféricos</span>
+                </div>
+                <div class="category-card" data-category="assistencia">
+                    <div class="category-icon"><i class="fa-solid fa-wrench"></i></div>
+                    <span>Assistência</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="produtos" class="products-section">
+            <div class="section-header-inline">
+                <div class="section-title-left">
+                    <h2>Produtos em Destaque</h2>
+                    <p>Os melhores produtos com os melhores preços</p>
+                </div>
+                <button class="view-all-btn" id="clear-filters">Ver todos →</button>
+            </div>
+            <div class="products-grid" id="products-container"></div>
+        </section>
+    </main>
+
+    <footer class="main-footer" id="contato">
+        <div class="footer-container">
+            <div class="footer-info">
+                <div class="logo logo-footer">
+                    <span class="logo-box">IT</span>
+                    <div class="logo-text">
+                        <h2>Infotec</h2>
+                    </div>
+                </div>
+                <p class="footer-desc">A melhor e mais completa loja de hardware e assistência técnica para quem busca performance extrema e confiabilidade profissional.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Links Rápidos</h4>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#produtos">Produtos</a></li>
+                    <li><a href="#assistencia">Assistência Técnica</a></li>
+                    <li><a href="#pcs">PCs Gamer</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Suporte</h4>
+                <ul>
+                    <li><a href="#">Políticas de Troca</a></li>
+                    <li><a href="#">Garantia</a></li>
+                    <li><a href="#">Meus Pedidos</a></li>
+                    <li><a href="#">Fale Conosco</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Infotec Vendas e Soluções. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/seu-numero" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Fale Conosco no WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
