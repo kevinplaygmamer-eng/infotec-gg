@@ -18,6 +18,14 @@ DB_IS_POSTGRES = bool(DATABASE_URL and psycopg2 is not None)
 app = Flask(__name__, static_folder='.', static_url_path='')
 
 
+def normalize_email(value):
+    return str(value or '').strip().lower()
+
+
+def normalize_cpf(value):
+    return ''.join(char for char in str(value or '') if char.isdigit())
+
+
 def get_db_connection():
     if DB_IS_POSTGRES:
         conn = psycopg2.connect(DATABASE_URL)
@@ -200,25 +208,55 @@ def get_user(user_id):
 
 @app.route('/api/register', methods=['POST'])
 def register_user():
-    data = request.get_json(force=True)
-    required_fields = ['name', 'email', 'password', 'phone', 'cpf', 'address']
-    for field in required_fields:
-        if not data.get(field):
+    data = request.get_json(silent=True) or {}
+    name = str(data.get('name') or '').strip()
+    email = normalize_email(data.get('email'))
+    password = str(data.get('password') or '')
+    phone = str(data.get('phone') or '').strip()
+    cpf = normalize_cpf(data.get('cpf'))
+    address = str(data.get('address') or '').strip()
+
+    required_fields = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone': phone,
+        'cpf': cpf,
+        'address': address
+    }
+    for field, value in required_fields.items():
+        if not value:
             return jsonify({'error': f'{field} é obrigatório.'}), 400
+
+    if len(cpf) != 11:
+        return jsonify({'error': 'CPF deve ter 11 dígitos.'}), 400
 
     conn = get_db_connection()
     cur = get_cursor(conn)
     try:
         if DB_IS_POSTGRES:
             cur.execute(
+                "SELECT id FROM users WHERE LOWER(email) = %s OR REPLACE(REPLACE(cpf, '.', ''), '-', '') = %s",
+                (email, cpf)
+            )
+        else:
+            cur.execute(
+                "SELECT id FROM users WHERE LOWER(email) = ? OR REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?",
+                (email, cpf)
+            )
+        if cur.fetchone() is not None:
+            return jsonify({'error': 'Email ou CPF já cadastrado.'}), 400
+
+        if DB_IS_POSTGRES:
+            cur.execute(
                 'INSERT INTO users (name, email, phone, cpf, address, password) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',
-                (data['name'], data['email'], data['phone'], data['cpf'], data['address'], data['password'])
+                (name, email, phone, cpf, address, password)
             )
             user_id = cur.fetchone()['id']
         else:
             cur.execute(
                 'INSERT INTO users (name, email, phone, cpf, address, password) VALUES (?, ?, ?, ?, ?, ?)',
-                (data['name'], data['email'], data['phone'], data['cpf'], data['address'], data['password'])
+                (name, email, phone, cpf, address, password)
             )
             user_id = cur.lastrowid
         conn.commit()
@@ -237,18 +275,20 @@ def register_user():
 
 @app.route('/api/login', methods=['POST'])
 def login_user():
-    data = request.get_json(force=True)
-    if not data.get('email') or not data.get('password'):
+    data = request.get_json(silent=True) or {}
+    email = normalize_email(data.get('email'))
+    password = str(data.get('password') or '')
+    if not email or not password:
         return jsonify({'error': 'Email e senha são obrigatórios.'}), 400
 
     conn = get_db_connection()
     cur = get_cursor(conn)
     if DB_IS_POSTGRES:
-        cur.execute('SELECT id, name, email, phone, cpf, address, password, created_at FROM users WHERE email = %s',
-                    (data['email'],))
+        cur.execute('SELECT id, name, email, phone, cpf, address, password, created_at FROM users WHERE LOWER(email) = %s',
+                    (email,))
     else:
-        cur.execute('SELECT id, name, email, phone, cpf, address, password, created_at FROM users WHERE email = ?',
-                    (data['email'],))
+        cur.execute('SELECT id, name, email, phone, cpf, address, password, created_at FROM users WHERE LOWER(email) = ?',
+                    (email,))
     row = cur.fetchone()
 
     if row is None:
@@ -256,7 +296,7 @@ def login_user():
         return jsonify({'error': 'Email incorreto.'}), 401
 
     user = row_to_dict(row)
-    if user['password'] != data['password']:
+    if user['password'] != password:
         conn.close()
         return jsonify({'error': 'Senha incorreta.'}), 401
 
@@ -271,8 +311,10 @@ def health():
     return jsonify({'status': 'ok'})
 
 
+init_db()
+
+
 if __name__ == '__main__':
-    init_db()
     host = os.getenv('HOST', '0.0.0.0')
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', 'False').lower() in ('1', 'true', 'yes')

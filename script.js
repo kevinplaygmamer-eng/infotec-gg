@@ -340,28 +340,17 @@ function formatCpfDigits(cpf) {
     return cpf.replace(/\D/g, '');
 }
 
+function normalizeEmail(email) {
+    return email.trim().toLowerCase();
+}
+
 function validateCPF(cpf) {
-    if (!cpf) return false;
-    cpf = formatCpfDigits(cpf);
-    if (cpf.length !== 11 || /^([0-9])\1{10}$/.test(cpf)) return false;
-
-    const calcCheckDigit = (cpfSlice) => {
-        let sum = 0;
-        for (let i = 0; i < cpfSlice.length; i++) {
-            sum += Number(cpfSlice[i]) * ((cpfSlice.length + 1) - i);
-        }
-        const result = (sum * 10) % 11;
-        return result === 10 ? 0 : result;
-    };
-
-    const firstDigit = calcCheckDigit(cpf.slice(0, 9));
-    const secondDigit = calcCheckDigit(cpf.slice(0, 10));
-    return firstDigit === Number(cpf[9]) && secondDigit === Number(cpf[10]);
+    return formatCpfDigits(cpf).length === 11;
 }
 
 async function handleLoginSubmit(event) {
     event.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
+    const email = normalizeEmail(document.getElementById('login-email').value);
     const password = document.getElementById('login-password').value;
 
     if (!email || !password) {
@@ -371,14 +360,14 @@ async function handleLoginSubmit(event) {
 
     try {
         const user = await apiLogin({ email, password });
-        saveUserSession(user);
+        saveUserSession(user, password);
         closeAccountModal();
         showToast(`Bem-vindo de volta, ${user.name}!`);
         setTimeout(() => {
             window.location.href = 'profile.html';
         }, 600);
     } catch (error) {
-        if (registeredUser && email === registeredUser.email && password === registeredUser.password) {
+        if (registeredUser && email === normalizeEmail(registeredUser.email || '') && password === registeredUser.password) {
             saveUserSession(registeredUser);
             closeAccountModal();
             showToast(`Bem-vindo de volta, ${registeredUser.name}! (Offline)`);
@@ -394,9 +383,9 @@ async function handleLoginSubmit(event) {
 async function handleRegisterSubmit(event) {
     event.preventDefault();
     const name = document.getElementById('register-name').value.trim();
-    const email = document.getElementById('register-email').value.trim();
+    const email = normalizeEmail(document.getElementById('register-email').value);
     const phone = document.getElementById('register-phone').value.trim();
-    const cpf = document.getElementById('register-cpf').value.trim();
+    const cpf = formatCpfDigits(document.getElementById('register-cpf').value);
     const address = document.getElementById('register-address').value.trim();
     const password = document.getElementById('register-password').value;
 
@@ -411,7 +400,7 @@ async function handleRegisterSubmit(event) {
     }
 
     if (!validateCPF(cpf)) {
-        showToast('CPF inválido.');
+        showToast('Informe um CPF com 11 digitos.');
         return;
     }
 
@@ -419,7 +408,7 @@ async function handleRegisterSubmit(event) {
 
     try {
         const user = await apiRegister(newUser);
-        saveUserSession(user);
+        saveUserSession(user, newUser.password);
         closeAccountModal();
         loginForm.reset();
         registerForm.reset();
@@ -450,11 +439,7 @@ async function apiLogin(credentials) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
         });
-        const json = await response.json();
-        if (!response.ok) {
-            throw new Error(json.error || 'Erro no login');
-        }
-        return json;
+        return await parseApiResponse(response, 'Erro no login');
     } catch (err) {
         if (err.name === 'TypeError') {
             throw new Error('Falha de rede: API inacessível');
@@ -470,11 +455,7 @@ async function apiRegister(userData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
-        const json = await response.json();
-        if (!response.ok) {
-            throw new Error(json.error || 'Erro no cadastro');
-        }
-        return json;
+        return await parseApiResponse(response, 'Erro no cadastro');
     } catch (err) {
         if (err.name === 'TypeError') {
             throw new Error('Falha de rede: API inacessível');
@@ -483,9 +464,36 @@ async function apiRegister(userData) {
     }
 }
 
-function saveUserSession(user) {
-    registeredUser = user;
-    localStorage.setItem('registeredUser', JSON.stringify(user));
+async function parseApiResponse(response, fallbackMessage) {
+    const text = await response.text();
+    let json = {};
+
+    if (text) {
+        try {
+            json = JSON.parse(text);
+        } catch (error) {
+            throw new Error('Resposta inválida do servidor');
+        }
+    }
+
+    if (!response.ok) {
+        throw new Error(json.error || fallbackMessage);
+    }
+
+    return json;
+}
+
+function saveUserSession(user, password = null) {
+    const currentPassword = registeredUser && normalizeEmail(registeredUser.email || '') === normalizeEmail(user.email || '')
+        ? registeredUser.password
+        : null;
+    registeredUser = { ...user };
+    if (password) {
+        registeredUser.password = password;
+    } else if (!registeredUser.password && currentPassword) {
+        registeredUser.password = currentPassword;
+    }
+    localStorage.setItem('registeredUser', JSON.stringify(registeredUser));
     sessionStorage.setItem('userLoggedIn', 'true');
     updateAccountButtons(true);
 }
@@ -501,7 +509,7 @@ function showToast(message) {
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
-    }, 300);
+    }, 3000);
 }
 
 function openCheckoutModal() {
