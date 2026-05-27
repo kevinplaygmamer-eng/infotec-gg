@@ -83,33 +83,92 @@
     <div class="cart-overlay" id="cart-overlay"></div>
 
     <div class="account-modal" id="checkout-modal">
-        <div class="account-modal-content">
+        <div class="account-modal-content checkout-modal-content">
             <button type="button" class="close-account-btn close-checkout-btn" aria-label="Fechar">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <h2>Finalizar Compra</h2>
             <p id="checkout-total" class="account-help">Total: R$ 0,00</p>
-            <div class="checkout-section">
-                <label><input type="radio" name="payment-method" value="pix" checked> PIX</label>
-                <label><input type="radio" name="payment-method" value="boleto"> Boleto</label>
-                <label><input type="radio" name="payment-method" value="card"> Cartão</label>
+
+            <div class="payment-methods" aria-label="Forma de pagamento">
+                <label class="payment-option active">
+                    <input type="radio" name="payment-method" value="pix" checked>
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span>PIX</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="card">
+                    <i class="fa-regular fa-credit-card"></i>
+                    <span>Cartão</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="boleto">
+                    <i class="fa-solid fa-barcode"></i>
+                    <span>Boleto</span>
+                </label>
             </div>
-            <div class="account-form">
-                <label for="checkout-address">Endereço para entrega</label>
-                <input type="text" id="checkout-address" placeholder="Rua, número, bairro, cidade" required>
+
+            <div class="checkout-grid">
+                <div class="account-form checkout-customer-form">
+                    <label for="checkout-name">Nome completo</label>
+                    <input type="text" id="checkout-name" placeholder="Nome do comprador" required>
+                    <label for="checkout-email">Email</label>
+                    <input type="email" id="checkout-email" placeholder="seu@email.com" required>
+                    <label for="checkout-cpf">CPF</label>
+                    <input type="text" id="checkout-cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    <label for="checkout-phone">Telefone</label>
+                    <input type="tel" id="checkout-phone" placeholder="(00) 00000-0000" required>
+                </div>
+
+                <div class="account-form checkout-address-form">
+                    <label for="checkout-zip">CEP</label>
+                    <input type="text" id="checkout-zip" placeholder="00000-000" maxlength="9" required>
+                    <label for="checkout-street">Rua</label>
+                    <input type="text" id="checkout-street" placeholder="Rua" required>
+                    <label for="checkout-number">Número</label>
+                    <input type="text" id="checkout-number" placeholder="123 ou S/N" required>
+                    <label for="checkout-neighborhood">Bairro</label>
+                    <input type="text" id="checkout-neighborhood" placeholder="Bairro" required>
+                    <label for="checkout-city">Cidade</label>
+                    <input type="text" id="checkout-city" placeholder="Cidade" required>
+                    <label for="checkout-state">UF</label>
+                    <input type="text" id="checkout-state" placeholder="SP" maxlength="2" required>
+                </div>
             </div>
-            <div id="card-info-section" class="account-form" style="display:none; gap:12px;">
-                <label for="card-name">Nome no cartão</label>
-                <input type="text" id="card-name" placeholder="Nome impresso no cartão">
-                <label for="card-number">Número do cartão</label>
-                <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19">
-                <label for="card-exp">Validade</label>
-                <input type="text" id="card-exp" placeholder="MM/AA" maxlength="5">
-                <label for="card-cvv">CVV</label>
-                <input type="text" id="card-cvv" placeholder="000" maxlength="4">
+
+            <div id="card-info-section" class="checkout-brick-section" style="display:none;">
+                <div id="card-payment-brick-container"></div>
+                <p class="account-help">Os dados do cartão são processados com segurança pelo Mercado Pago.</p>
             </div>
-            <button type="button" class="account-submit-btn" id="confirm-payment-btn">Pagar</button>
-            <p class="account-help">Escolha sua forma de pagamento. Esta é uma simulação de checkout.</p>
+
+            <button type="button" class="account-submit-btn" id="confirm-payment-btn">
+                <i class="fa-solid fa-lock"></i> Gerar pagamento
+            </button>
+
+            <div class="payment-status-panel" id="payment-status-panel" hidden>
+                <div class="payment-status-header">
+                    <span class="payment-status-dot"></span>
+                    <div>
+                        <h3 id="payment-status-title">Aguardando pagamento</h3>
+                        <p id="payment-status-detail">Assim que o Mercado Pago confirmar, o pedido será atualizado.</p>
+                    </div>
+                </div>
+                <div id="pix-result" class="payment-result" hidden>
+                    <img id="pix-qr-image" alt="QR Code PIX">
+                    <label for="pix-copy-code">PIX copia e cola</label>
+                    <textarea id="pix-copy-code" readonly></textarea>
+                    <button type="button" class="copy-payment-btn" id="copy-pix-btn">
+                        <i class="fa-regular fa-copy"></i> Copiar código PIX
+                    </button>
+                </div>
+                <div id="boleto-result" class="payment-result" hidden>
+                    <label for="boleto-barcode">Código do boleto</label>
+                    <textarea id="boleto-barcode" readonly></textarea>
+                    <a id="boleto-link" class="payment-link-btn" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir boleto
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -293,6 +352,7 @@
 
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="script.js"></script>
 </body>
 </html>
