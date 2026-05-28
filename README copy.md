@@ -23,8 +23,6 @@ Nunca coloque a Access Token no HTML ou no JavaScript do navegador. Ela fica som
 
 ## Rodar localmente
 ```bash
-npm install
-npm start
 ```
 
 Acesse: http://localhost:5000

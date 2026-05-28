@@ -13,6 +13,8 @@ services:
         value: production
       - key: DATABASE_PATH
         value: ./meubanco.db
+      - key: DATABASE_URL
+        sync: false
       - key: PUBLIC_BASE_URL
         sync: false
       - key: MERCADO_PAGO_ACCESS_TOKEN

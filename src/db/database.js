@@ -7,6 +7,8 @@ let SQL;
 let db;
 let dbReady;
 let writeQueue = Promise.resolve();
+let usingPostgres = Boolean(env.databaseUrl && env.databaseUrl.trim());
+let pool;
 
 const productSeeds = [
   [1, 'PC Gamer RTX 4070', 'computadores', 'Processador de ultima geracao, 32GB RAM DDR5, SSD 1TB NVMe.', 7999.00, '12x de R$ 666,58', 5.0, 'Mais Vendido', 'https://http2.mlstatic.com/D_NQ_NP_2X_855780-MLB82309991799_022025-F.webp'],
@@ -20,8 +22,16 @@ const productSeeds = [
 export function getDb() {
   return loadDatabase();
 }
-
 async function loadDatabase() {
+  if (usingPostgres) {
+    if (!pool) {
+      const { Pool } = await import('pg');
+      pool = new Pool({ connectionString: env.databaseUrl, ssl: env.nodeEnv === 'production' ? { rejectUnauthorized: false } : false });
+    }
+
+    return pool;
+  }
+
   if (!dbReady) {
     dbReady = (async () => {
       SQL = await initSqlJs({
@@ -44,12 +54,13 @@ async function loadDatabase() {
 }
 
 async function persistDatabase() {
+  if (usingPostgres) return;
   const data = db.export();
   await fs.mkdir(path.dirname(env.databasePath), { recursive: true });
   await fs.writeFile(env.databasePath, Buffer.from(data));
 }
 
-function queryRows(sql, params = []) {
+function sqliteQueryRows(sql, params = []) {
   const statement = db.prepare(sql);
   const rows = [];
 
@@ -66,10 +77,21 @@ function queryRows(sql, params = []) {
 }
 
 export async function run(sql, params = []) {
+  if (usingPostgres) {
+    const pool = await loadDatabase();
+    const client = await pool.connect();
+    try {
+      const res = await client.query(sql, params);
+      return { lastID: res.rows?.[0]?.id || 0, changes: res.rowCount || 0 };
+    } finally {
+      client.release();
+    }
+  }
+
   writeQueue = writeQueue.then(async () => {
     await loadDatabase();
     db.run(sql, params);
-    const meta = queryRows('SELECT last_insert_rowid() AS lastID, changes() AS changes')[0];
+    const meta = sqliteQueryRows('SELECT last_insert_rowid() AS lastID, changes() AS changes')[0];
     await persistDatabase();
     return {
       lastID: meta?.lastID || 0,
@@ -81,16 +103,130 @@ export async function run(sql, params = []) {
 }
 
 export async function get(sql, params = []) {
+  if (usingPostgres) {
+    const pool = await loadDatabase();
+    const res = await pool.query(sql, params);
+    return res.rows[0];
+  }
+
   await loadDatabase();
-  return queryRows(sql, params)[0];
+  return sqliteQueryRows(sql, params)[0];
 }
 
 export async function all(sql, params = []) {
+  if (usingPostgres) {
+    const pool = await loadDatabase();
+    const res = await pool.query(sql, params);
+    return res.rows;
+  }
+
   await loadDatabase();
-  return queryRows(sql, params);
+  return sqliteQueryRows(sql, params);
 }
 
 export async function initDatabase() {
+  if (usingPostgres) {
+    // Create tables adapted for Postgres
+    await run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT,
+        cpf TEXT NOT NULL UNIQUE,
+        address TEXT,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        category TEXT,
+        desc TEXT,
+        price REAL,
+        installment TEXT,
+        rating REAL,
+        badge TEXT,
+        image TEXT
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER,
+        customer_name TEXT NOT NULL,
+        customer_email TEXT NOT NULL,
+        customer_phone TEXT,
+        customer_cpf TEXT,
+        shipping_address TEXT,
+        address_json TEXT,
+        total_amount REAL NOT NULL,
+        status TEXT NOT NULL DEFAULT 'created',
+        payment_status TEXT NOT NULL DEFAULT 'pending',
+        payment_status_detail TEXT,
+        payment_method TEXT,
+        mercado_pago_payment_id TEXT,
+        ticket_url TEXT,
+        qr_code TEXT,
+        qr_code_base64 TEXT,
+        barcode TEXT,
+        external_reference TEXT UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id SERIAL PRIMARY KEY,
+        order_id TEXT NOT NULL,
+        product_id INTEGER,
+        name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price REAL NOT NULL,
+        total_price REAL NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id)
+      )
+    `);
+
+    await run(`
+      CREATE TABLE IF NOT EXISTS payment_events (
+        id SERIAL PRIMARY KEY,
+        order_id TEXT,
+        mercado_pago_payment_id TEXT,
+        event_type TEXT,
+        action TEXT,
+        payload TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const productCount = await get('SELECT COUNT(1) AS count FROM products');
+    if (!productCount || Number(productCount.count) === 0) {
+      for (const product of productSeeds) {
+        await run(
+          'INSERT INTO products (id, name, category, desc, price, installment, rating, badge, image) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+          product
+        );
+      }
+    }
+
+    for (const product of productSeeds) {
+      await run(
+        "UPDATE products SET image = $1 WHERE id = $2 AND (image IS NULL OR TRIM(image) = '')",
+        [product[8], product[0]]
+      );
+    }
+
+    return;
+  }
+
+  // fallback: sqlite behavior
   await run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
