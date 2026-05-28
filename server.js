@@ -7,7 +7,11 @@ const __dirname = path.dirname(__filename);
 const serverPath = path.join(__dirname, 'src', 'server.js');
 
 if (!fs.existsSync(serverPath)) {
-  console.error('Arquivo src/server.js nao encontrado. Verifique se a pasta src foi enviada no deploy.');
+  const files = fs.readdirSync(__dirname).join(', ');
+  console.error(`Arquivo src/server.js nao encontrado em ${serverPath}.`);
+  console.error(`Diretorio atual: ${process.cwd()}`);
+  console.error(`Arquivos recebidos no deploy: ${files}`);
+  console.error('Verifique no Render se o repositorio, a branch main e o Root Directory vazio/raiz estao configurados corretamente.');
   process.exit(1);
 }
 
