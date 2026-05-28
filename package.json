@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Loja Infotec com backend Node.js e pagamentos Mercado Pago",
   "type": "module",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "check": "node --check src/server.js && node --check src/routes/auth.routes.js && node --check src/routes/products.routes.js && node --check src/routes/checkout.routes.js && node --check src/routes/webhooks.routes.js && node --check src/services/mercadoPago.service.js && node --check src/services/order.service.js && node --check src/db/database.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check src/server.js && node --check src/routes/auth.routes.js && node --check src/routes/products.routes.js && node --check src/routes/checkout.routes.js && node --check src/routes/webhooks.routes.js && node --check src/services/mercadoPago.service.js && node --check src/services/order.service.js && node --check src/db/database.js"
   },
   "engines": {
     "node": ">=18"

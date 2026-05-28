@@ -4,11 +4,11 @@ const defaultProductsData = [
         name: "PC Gamer RTX 4070",
         category: "computadores",
         desc: "Processador de última geração, 32GB RAM DDR5, SSD 1TB NVMe.",
-        price: 7999.00,
+        price: 9999.00,
         installment: "12x de R$ 666,58",
         rating: 5.0,
         badge: "Mais Vendido",
-        image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80"
+        image: "https://http2.mlstatic.com/D_NQ_NP_2X_855780-MLB82309991799_022025-F.webp"
     },
     {
         id: 2,
@@ -19,7 +19,7 @@ const defaultProductsData = [
         installment: "10x de R$ 349,90",
         rating: 5.0,
         badge: "Oferta",
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"
+        image: "https://http2.mlstatic.com/D_NQ_NP_2X_705031-MLA92611852323_092025-F.webp"
     },
     {
         id: 3,
@@ -30,7 +30,7 @@ const defaultProductsData = [
         installment: "10x de R$ 229,90",
         rating: 4.0,
         badge: "Popular",
-        image: "https://images.unsplash.com/photo-1587829191301-1ec42907352a?auto=format&fit=crop&w=800&q=80"
+        image: "https://m.media-amazon.com/images/I/617uDFLVAML._AC_SY300_SX300_QL70_ML2_.jpg"
     },
     {
         id: 4,
@@ -41,7 +41,7 @@ const defaultProductsData = [
         installment: "6x de R$ 74,83",
         rating: 5.0,
         badge: "Lançamento",
-        image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80"
+        image: "https://m.media-amazon.com/images/I/71c5uuoM1bL._AC_SX522_.jpg"
     },
     {
         id: 5,
@@ -52,27 +52,16 @@ const defaultProductsData = [
         installment: "12x de R$ 104,08",
         rating: 5.0,
         badge: "Mais Vendido",
-        image: "https://images.unsplash.com/photo-1555663499-e0e32b89b61b?auto=format&fit=crop&w=800&q=80"
+        image: "https://images7.kabum.com.br/produtos/fotos/938497/processador-amd-ryzen-7-5700-3-7-ghz-4-6ghz-max-turbo-cache-20mb-8-nucleos-16-threads-am4-100-100000743sbx_1763061441_gg.jpg"
     },
-    {
-        id: 6,
-        name: "Water Cooler RGB 240mm",
-        category: "memorias",
-        desc: "Refrigeração líquida eficiente com iluminação ARGB customizável.",
-        price: 399.00,
-        installment: "4x de R$ 99,75",
-        rating: 4.5,
-        badge: "Oferta",
-        image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=800&q=80"
-    }
+    
 ];
 
 let productsData = [];
-
-// Estado da Aplicação
 let cart = [];
 
-// Elementos do DOM
+const defaultProductById = new Map(defaultProductsData.map(product => [Number(product.id), product]));
+
 const productsContainer = document.getElementById('products-container');
 const searchInput = document.getElementById('search-input');
 const cartCount = document.getElementById('cart-count');
@@ -141,7 +130,14 @@ async function loadProductsFromApi() {
         if (!response.ok) {
             throw new Error('Falha ao buscar produtos do servidor');
         }
-        productsData = await response.json();
+        const apiProducts = await response.json();
+        productsData = apiProducts.map(product => {
+            const fallbackProduct = defaultProductById.get(Number(product.id));
+            return {
+                ...product,
+                image: product.image || fallbackProduct?.image || ''
+            };
+        });
         renderProducts(productsData);
     } catch (error) {
         productsData = defaultProductsData;
@@ -152,6 +148,7 @@ async function loadProductsFromApi() {
 
 // Renderizar Cards de Produtos
 function renderProducts(products) {
+    if (!productsContainer) return;
     productsContainer.innerHTML = '';
     
     if(products.length === 0) {
@@ -161,13 +158,16 @@ function renderProducts(products) {
 
     products.forEach(product => {
         const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
+        const productImage = product.image
+            ? `<img src="${product.image}" alt="${product.name}">`
+            : `<div class="product-image-placeholder" aria-label="Imagem indisponivel"><i class="fa-solid fa-image"></i></div>`;
         
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
             ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
             <div class="product-image-container">
-                <img src="${product.image}" alt="${product.name}">
+                ${productImage}
             </div>
             <div class="product-info">
                 <h3 class="product-name">${product.name}</h3>
@@ -235,60 +235,88 @@ window.removeFromCart = function(index) {
 }
 
 // Sistema de Busca em Tempo Real
-searchInput.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const filtered = productsData.filter(product => 
-        product.name.toLowerCase().includes(term) || 
-        product.desc.toLowerCase().includes(term)
-    );
-    renderProducts(filtered);
-});
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = productsData.filter(product => 
+            product.name.toLowerCase().includes(term) || 
+            product.desc.toLowerCase().includes(term)
+        );
+        renderProducts(filtered);
+    });
+}
 
 // Filtro por Categorias
 function setupEventListeners() {
     // Menu Lateral do Carrinho Toggle
-    document.querySelector('.cart-toggle-btn').addEventListener('click', () => {
-        cartSidebar.classList.add('open');
-        cartOverlay.classList.add('open');
-    });
+    const cartToggleBtn = document.querySelector('.cart-toggle-btn');
+    const closeCartBtn = document.querySelector('.close-cart-btn');
 
-    document.querySelector('.close-cart-btn').addEventListener('click', () => {
-        cartSidebar.classList.remove('open');
-        cartOverlay.classList.remove('open');
-    });
+    if (cartToggleBtn && cartSidebar) {
+        cartToggleBtn.addEventListener('click', () => {
+            cartSidebar.classList.add('open');
+            if (cartOverlay) cartOverlay.classList.add('open');
+        });
+    }
 
-    cartOverlay.addEventListener('click', () => {
-        cartSidebar.classList.remove('open');
-        cartOverlay.classList.remove('open');
-    });
+    if (closeCartBtn && cartSidebar) {
+        closeCartBtn.addEventListener('click', () => {
+            cartSidebar.classList.remove('open');
+            if (cartOverlay) cartOverlay.classList.remove('open');
+        });
+    }
+
+    if (cartOverlay && cartSidebar) {
+        cartOverlay.addEventListener('click', () => {
+            cartSidebar.classList.remove('open');
+            cartOverlay.classList.remove('open');
+        });
+    }
 
     // Mobile Menu Toggle
-    mobileMenuToggle.addEventListener('click', () => {
-        navbar.classList.toggle('mobile-open');
-    });
+    if (mobileMenuToggle && navbar) {
+        mobileMenuToggle.addEventListener('click', () => {
+            navbar.classList.toggle('mobile-open');
+        });
+    }
 
     // Clique nas categorias
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.getAttribute('data-category');
-            const filtered = productsData.filter(p => p.category === category);
-            renderProducts(filtered);
-            document.getElementById('produtos').scrollIntoView({ behavior: 'smooth' });
+    const categoryCards = document.querySelectorAll('.category-card');
+    if (categoryCards.length) {
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const category = card.getAttribute('data-category');
+                const filtered = productsData.filter(p => p.category === category);
+                renderProducts(filtered);
+                const produtosSection = document.getElementById('produtos');
+                if (produtosSection) {
+                    produtosSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
         });
-    });
+    }
 
-    document.getElementById('clear-filters').addEventListener('click', () => {
-        searchInput.value = '';
-        renderProducts(productsData);
-    });
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            renderProducts(productsData);
+        });
+    }
 
-    loginToggleBtn.addEventListener('click', () => openAccountModal('login'));
-    closeAccountBtn.addEventListener('click', closeAccountModal);
-    accountModal.addEventListener('click', (event) => {
-        if (event.target === accountModal) {
-            closeAccountModal();
-        }
-    });
+    if (loginToggleBtn) {
+        loginToggleBtn.addEventListener('click', () => openAccountModal('login'));
+    }
+    if (closeAccountBtn) {
+        closeAccountBtn.addEventListener('click', closeAccountModal);
+    }
+    if (accountModal) {
+        accountModal.addEventListener('click', (event) => {
+            if (event.target === accountModal) {
+                closeAccountModal();
+            }
+        });
+    }
 
     accountTabs.forEach(tab => {
         tab.addEventListener('click', () => switchAccountTab(tab.dataset.tab));
@@ -546,6 +574,8 @@ function saveUserSession(user, password = null) {
 
 function showToast(message) {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;

@@ -9,11 +9,11 @@ let dbReady;
 let writeQueue = Promise.resolve();
 
 const productSeeds = [
-  [1, 'PC Gamer RTX 4070', 'computadores', 'Processador de ultima geracao, 32GB RAM DDR5, SSD 1TB NVMe.', 7999.00, '12x de R$ 666,58', 5.0, 'Mais Vendido', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80'],
-  [2, 'Notebook Dell Inspiron i5', 'notebooks', 'Perfeito para produtividade e estudos, tela Full HD, SSD rapido.', 3499.00, '10x de R$ 349,90', 5.0, 'Oferta', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'],
-  [3, 'Placa de Video RTX 4060', 'placas-video', 'Ray Tracing e DLSS 3 para rodar todos os games atuais com fluidez.', 2299.00, '10x de R$ 229,90', 4.0, 'Popular', 'https://images.unsplash.com/photo-1587829191301-1ec42907352a?auto=format&fit=crop&w=800&q=80'],
-  [4, 'SSD NVMe 1TB Kingston', 'ssds', 'Velocidades de leitura extremas para carregar o sistema em segundos.', 449.00, '6x de R$ 74,83', 5.0, 'Lancamento', 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=800&q=80'],
-  [5, 'Processador Ryzen 7 5700X', 'processadores', '8 nucleos e 16 threads ideais para renderizacao e streaming.', 1249.00, '12x de R$ 104,08', 5.0, 'Mais Vendido', 'https://images.unsplash.com/photo-1555663499-e0e32b89b61b?auto=format&fit=crop&w=800&q=80'],
+  [1, 'PC Gamer RTX 4070', 'computadores', 'Processador de ultima geracao, 32GB RAM DDR5, SSD 1TB NVMe.', 7999.00, '12x de R$ 666,58', 5.0, 'Mais Vendido', 'https://http2.mlstatic.com/D_NQ_NP_2X_855780-MLB82309991799_022025-F.webp'],
+  [2, 'Notebook Dell Inspiron i5', 'notebooks', 'Perfeito para produtividade e estudos, tela Full HD, SSD rapido.', 3499.00, '10x de R$ 349,90', 5.0, 'Oferta', 'https://http2.mlstatic.com/D_NQ_NP_2X_705031-MLA92611852323_092025-F.webp'],
+  [3, 'Placa de Video RTX 4060', 'placas-video', 'Ray Tracing e DLSS 3 para rodar todos os games atuais com fluidez.', 2299.00, '10x de R$ 229,90', 4.0, 'Popular', 'https://m.media-amazon.com/images/I/617uDFLVAML._AC_SY300_SX300_QL70_ML2_.jpg'],
+  [4, 'SSD NVMe 1TB Kingston', 'ssds', 'Velocidades de leitura extremas para carregar o sistema em segundos.', 449.00, '6x de R$ 74,83', 5.0, 'Lancamento', 'https://m.media-amazon.com/images/I/71c5uuoM1bL._AC_SX522_.jpg'],
+  [5, 'Processador Ryzen 7 5700X', 'processadores', '8 nucleos e 16 threads ideais para renderizacao e streaming.', 1249.00, '12x de R$ 104,08', 5.0, 'Mais Vendido', 'https://images7.kabum.com.br/produtos/fotos/938497/processador-amd-ryzen-7-5700-3-7-ghz-4-6ghz-max-turbo-cache-20mb-8-nucleos-16-threads-am4-100-100000743sbx_1763061441_gg.jpg'],
   [6, 'Water Cooler RGB 240mm', 'memorias', 'Refrigeracao liquida eficiente com iluminacao ARGB customizavel.', 399.00, '4x de R$ 99,75', 4.5, 'Oferta', 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=800&q=80']
 ];
 
@@ -45,6 +45,7 @@ async function loadDatabase() {
 
 async function persistDatabase() {
   const data = db.export();
+  await fs.mkdir(path.dirname(env.databasePath), { recursive: true });
   await fs.writeFile(env.databasePath, Buffer.from(data));
 }
 
@@ -177,5 +178,12 @@ export async function initDatabase() {
         product
       );
     }
+  }
+
+  for (const product of productSeeds) {
+    await run(
+      "UPDATE products SET image = ? WHERE id = ? AND (image IS NULL OR TRIM(image) = '')",
+      [product[8], product[0]]
+    );
   }
 }
